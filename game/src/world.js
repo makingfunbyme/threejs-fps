@@ -14,6 +14,19 @@ export function createWorld(scene){
   function sign(text,x,y,z,w=4,color=PALETTE.accent){const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const c=canvas.getContext('2d');c.fillStyle=PALETTE.canvas;c.fillRect(0,0,1024,256);c.fillStyle=color;c.font='bold 95px monospace';c.fillText(text,35,160);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w/4),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(canvas)}));m.position.set(x,y,z);group.add(m);return m;}
   function crate(x,z,w=1.6,h=1.4){box(w,h,w,x,h/2,z,'hairline');for(const side of [-1,1]){box(w+.03,.08,.07,x,.18,z+side*w/2,'accent',false);box(w+.03,.08,.07,x,h-.18,z+side*w/2,'canvas',false);}box(.1,h,.06,x-w/2+.16,h/2,z+w/2+.02,'canvas',false);box(.1,h,.06,x+w/2-.16,h/2,z+w/2+.02,'canvas',false);}
   box(30,.4,36,0,-.2,0,'surface');box(.5,5,36,-15,2.5,0,'surface');box(.5,5,36,15,2.5,0,'surface');box(30,5,.5,0,2.5,-18,'surface');box(30,5,.5,0,2.5,18,'surface');
+  // Flush zone surfaces preserve the collision floor and make routes readable.
+  const west=box(7,.012,30,-11,.007,0,'hairline',false);west.material=mats.hairline.clone();west.material.roughness=.98;west.material.metalness=.05;
+  const loading=box(10,.012,10,8,.008,-12,'canvas',false);loading.material=mats.canvas.clone();loading.material.roughness=.5;loading.material.metalness=.4;
+  for(let z=-15;z<16;z+=2)box(6,.014,.035,-11,.017,z,'surface',false);
+  // Salvage drone, perimeter antenna, and container stack stay clear of routes.
+  const drone=box(1.1,.3,.7,-3,.24,12,'hairline',false);drone.rotation.set(.15,.4,.18);
+  box(2.6,.08,.16,-3,.32,12,'canvas',false);box(.22,.12,.22,-3,.45,11.7,'enemy',false);
+  for(const x of [-4.1,-1.9]){box(.65,.06,.65,x,.28,12,'canvas',false);box(.7,.025,.08,x,.34,12,'accent',false);}
+  box(.28,9,.28,-13.5,4.5,-16.5,'hairline');
+  for(let y=3;y<9;y+=1.5){box(1.6,.1,.12,-13.5,y,-16.5,'accent',false);box(.12,.65,.7,-13.5,y+.3,-16.5,'canvas',false);}
+  const beacon=new THREE.Mesh(new THREE.SphereGeometry(.12,8,6),new THREE.MeshBasicMaterial({color:PALETTE.enemy}));beacon.position.set(-13.5,9.1,-16.5);group.add(beacon);
+  for(let i=0;i<2;i++){box(3,1.5,1.5,1, .75+i*1.5,-16,'surface');for(let x=-.3;x<2.5;x+=.4)box(.055,1.3,.04,x,.75+i*1.5,-15.23,'hairline',false);}
+  sign('SALVAGE / 03',-3,1.1,13.1,2);sign('RELAY CORE',1,2.2,-15.22,2.5);
   box(5,4.6,8,0,2.3,0,'canvas');box(1,3.5,6,-7,1.75,1,'hairline');box(3,3.2,5,6,1.6,1,'hairline');
   crate(-10,7,2.3,1.1);crate(10,1,1.7,1.2);crate(-6,-10,1.7,1.4);crate(3,-11,2,1.3);crate(11,-14,1.6,2);crate(-1,10,2,1.2);crate(-12,-1,1.3,1.6);crate(9,7,1.4,1.35);crate(-3,-15,2,1.2);
   // Walkable loading deck and shallow stairs provide a second height without sealing a route.

@@ -16,11 +16,11 @@ export function createCombat(world,random,effects,audio){
     for(let i=-1;i<state.bots.length;i++){const a=i===-1?state:state.bots[i];if(!a.alive||(i===-1?0:a.team)===team)continue;const p=i===-1?state.player.position:a.position,h=i===-1?state.player.height:1.72;
       for(let part=0;part<2;part++){const r=part?.19:.29;box.min.set(p.x-r,p.y+(part?h-.34:.25),p.z-r);box.max.set(p.x+r,p.y+(part?h:h-.34),p.z+r);if(ray.intersectBox(box,point)){const d=origin.distanceTo(point);if(d<best){best=d;victim=a;head=!!part;}}}
     }
-    impact.copy(origin).addScaledVector(dir,best);effects.trace(origin,dir,best);const amount=value*(head?2.5:1);
+    impact.copy(origin).addScaledVector(dir,best);effects.trace(origin,dir,best,shooter===state?state.weapon.id:2);const amount=value*(head?2.5:1);
     if(best<99)effects.impact(impact,!!victim,shooter===state&&victim?amount:0,head);
     if(victim){damage(victim,amount,shooter,head);if(shooter===state){state.hit=.14;audio.hit();}}
     state.noise.x=origin.x;state.noise.z=origin.z;state.noise.time=state.elapsed;state.noise.team=team;
   }
   function visible(origin,target){if(smokeBlocked(origin,target))return false;dir.subVectors(target,origin);const d=dir.length();dir.multiplyScalar(1/(d||1));return wallDistance(origin,dir,d)>=d-.04;}
-  return {fire,damage,visible,wallDistance};
+  return {fire,damage,visible,wallDistance,smokeBlocked};
 }

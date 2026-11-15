@@ -18,21 +18,23 @@ export function createBots(scene,world,combat,random,audio){
     for(const c of world.colliders){if(c.max.y<.1)continue;if(nx+.31>c.min.x&&nx-.31<c.max.x&&b.position.z+.31>c.min.z&&b.position.z-.31<c.max.z)bx=true;if(b.position.x+.31>c.min.x&&b.position.x-.31<c.max.x&&nz+.31>c.min.z&&nz-.31<c.max.z)bz=true;}
     if(!bx)b.position.x=nx;if(!bz)b.position.z=nz;b.group.rotation.y=Math.atan2(-dx,-dz);b.legs[0].rotation.x=Math.sin(state.elapsed*10)*.3;b.legs[1].rotation.x=-b.legs[0].rotation.x;return false;
   }
-  function step(dt){for(const b of state.bots){if(!b.alive){b.fall=Math.min(1,b.fall+dt*3);b.group.rotation.z=b.fall*1.5;continue;}b.cooldown-=dt;b.think-=dt;b.hold-=dt;origin.copy(b.position);origin.y+=1.5;
+  function reroute(b){const next=(b.route+1+Math.floor(random()*2))%ROUTES.length,route=ROUTES[next];let best=Infinity,node=0;for(let i=0;i<route.length;i++){const p=route[i],d=Math.hypot(b.position.x-p[0],b.position.z-p[1]);if(d<best){best=d;node=i;}}b.route=next;b.node=node;b.hold=0;}
+  function step(dt){let living0=state.alive?1:0,living1=0;for(const b of state.bots)if(b.alive){if(b.team)living1++;else living0++;}for(const b of state.bots){if(!b.alive){b.fall=Math.min(1,b.fall+dt*3);b.group.rotation.z=b.fall*1.5;continue;}const careful=(b.team?living1:living0)===1;b.cooldown-=dt;b.think-=dt;b.hold-=dt;origin.copy(b.position);origin.y+=1.5;
+    if(b.target?.alive){target.copy(b.target===state?state.player.position:b.target.position);target.y+=1.2;if(combat.smokeBlocked(origin,target)){b.target=null;b.reaction=0;b.heard=0;reroute(b);b.think=.6;}}
     if(b.think<=0){b.think=.15+random()*.1;let nearest=34;b.target=null;
       for(let i=-1;i<state.bots.length;i++){const enemy=i===-1?state:state.bots[i];if(!enemy.alive||(i===-1?0:enemy.team)===b.team)continue;target.copy(i===-1?state.player.position:enemy.position);target.y+=1.2;const dist=origin.distanceTo(target);if(dist<nearest&&combat.visible(origin,target)){nearest=dist;b.target=enemy;}}
       if(!b.target&&state.elapsed-state.noise.time<1.2&&state.noise.team!==b.team&&Math.hypot(b.position.x-state.noise.x,b.position.z-state.noise.z)<19){b.lastX=state.noise.x;b.lastZ=state.noise.z;b.heard=2.5;}
     }
     if(b.target&&b.target.alive){target.copy(b.target===state?state.player.position:b.target.position);target.y+=1.2;direction.subVectors(target,origin).normalize();b.reaction+=dt;
-      if(Math.sin(state.elapsed*2+b.route)>.55)move(b,b.position.x+direction.z*b.peek,b.position.z-direction.x*b.peek,dt,1.1);
+      if(!careful&&Math.sin(state.elapsed*2+b.route)>.55)move(b,b.position.x+direction.z*b.peek,b.position.z-direction.x*b.peek,dt,1.1);
       b.group.rotation.y=Math.atan2(-direction.x,-direction.z);
       if(b.cooldown<=0&&b.reaction>.36&&combat.visible(origin,target)){combat.fire(origin,direction,b,18,.035+origin.distanceTo(target)*.001);b.cooldown=.23+random()*.2;if(origin.distanceTo(state.player.position)<20)audio.shot(2,true);}continue;
     }
     b.reaction=0;const attack=b.team===(state.attacking?0:1),site=SITES[state.bomb.site];
     if(state.bomb.planted){if(!attack)move(b,site.x,site.z,dt);else if(Math.hypot(b.position.x-site.x,b.position.z-site.z)>5)move(b,site.x+3,site.z+2,dt);continue;}
     if(attack&&state.bomb.dropped){move(b,state.bomb.x,state.bomb.z,dt);continue;}
-    if(b.heard>0){b.heard-=dt;move(b,b.lastX,b.lastZ,dt);continue;}
-    if(b.hold>0)continue;const route=ROUTES[b.route],p=route[b.node];if(move(b,p[0],p[1],dt)){if(attack&&b.node<route.length-1)b.node++;else if(!attack&&b.node>2){b.node--;b.hold=1.6+random()*2;}}
+    if(b.heard>0){b.heard-=dt;if(!careful||b.heard<1)move(b,b.lastX,b.lastZ,dt,careful?1.5:2.7);else b.group.rotation.y=Math.atan2(b.position.x-b.lastX,b.position.z-b.lastZ);continue;}
+    if(b.hold>0)continue;const route=ROUTES[b.route],p=route[b.node];if(move(b,p[0],p[1],dt,careful?1.6:2.7)){if(attack&&b.node<route.length-1)b.node++;else if(!attack&&b.node>2)b.node--;if(careful)b.hold=2.5+random()*2;else if(random()<.18){reroute(b);b.hold=.4;}else if(!attack)b.hold=1.6+random()*2;}
   }}
   return {reset,step};
 }

@@ -3,10 +3,11 @@ import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
 export function createRounds(player,weapon,bots,grenades,effects,audio){
   function begin(){state.round++;state.attacking=state.round%2===1;state.phase='buy';state.time=18;state.buyOpen=false;state.health=100;state.armor=state.died?0:state.armor;state.alive=true;if(state.died)state.kit=false;state.grenade=Math.max(1,state.grenade);state.smoke=Math.max(1,state.smoke);weapon.reset(state.died||state.round===1);state.died=false;
+    if(state.round===1){state.winTeam=-1;state.winStreak=0;}
     const p=player.state;p.position.set(state.attacking?9:8,0,state.attacking?14:-14);p.velocity.set(0,0,0);p.yaw=state.attacking?0:Math.PI;p.pitch=0;
     Object.assign(state.bomb,{planted:false,carrier:state.attacking?-1:3,dropped:false,x:7,z:-11,timer:40,progress:0,actor:-2,site:0,duration:3.5});bots.reset();grenades.reset();effects.reset();audio.beep();
   }
-  function finish(team,reason){if(state.phase!=='live')return;state.winner=team;state.reason=reason;state.scores[team]++;if(team===0){state.lossStreak=0;state.money+=3250;}else{state.money+=1400+500*Math.min(state.lossStreak,4);state.lossStreak++;}state.money=Math.min(16000,state.money);state.died=!state.alive;state.phase=state.scores[team]>=8?'match':'end';state.time=6;state.buyOpen=false;audio.beep();}
+  function finish(team,reason){if(state.phase!=='live')return;state.winStreak=state.winTeam===team?(state.winStreak||0)+1:1;state.winTeam=team;state.winner=team;state.reason=reason;state.scores[team]++;if(team===0){state.lossStreak=0;state.money+=3250;}else{state.money+=1400+500*Math.min(state.lossStreak,4);state.lossStreak++;}state.money=Math.min(16000,state.money);state.died=!state.alive;state.phase=state.scores[team]>=8?'match':'end';state.time=6;state.buyOpen=false;audio.beep();}
   function buy(id){if(state.phase!=='buy'||!state.alive||id<0||id>7)return;const cost=id<4?GUNS[id].price:id===4?650:id===7?400:300;
     if(state.money<cost){state.message='INSUFFICIENT CREDITS';state.messageTime=2;return;}
     if((id===4&&state.armor>=100)||(id===5&&state.grenade>=2)||(id===6&&state.smoke>=2)||(id===7&&state.kit)){state.message='EQUIPMENT ALREADY FULL';state.messageTime=2;return;}

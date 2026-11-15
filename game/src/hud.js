@@ -6,7 +6,14 @@ export function createHud(){
   const labels=['','','','','Ceramic armor','Fragmentation grenade','Smoke canister','Defuse kit'],costs=[0,1200,2500,4200,650,300,300,400];let lastPhase='';
   for(let i=0;i<8;i++){const b=document.createElement('button');b.dataset.item=i;b.innerHTML=`<span>0${i+1}</span><b>${i<4?GUNS[i].name:labels[i]}</b><small>$${costs[i]}</small>`;nodes.buy.querySelector('.stock').appendChild(b);}
   const slotNodes=[];for(let i=0;i<4;i++){const el=document.createElement('span');el.textContent=`${i+1} ${GUNS[i].short}`;nodes.slots.appendChild(el);slotNodes.push(el);}
+  const compass=document.createElement('div'),scope=document.createElement('div'),streak=document.createElement('small'),interaction=document.createElement('b');compass.id='compass';scope.id='scope';streak.id='streak';interaction.id='interaction';$('hud').append(compass,scope);nodes.scores.after(streak);nodes.progress.parentElement.after(interaction);
+  const markers=[];for(let i=0;i<8;i++){const marker=document.createElement('span');marker.textContent=i%4===0?'N':i%4===1?'E':i%4===2?'S':'W';compass.appendChild(marker);markers.push(marker);}
   return {render(){const phase=state.phase,w=state.weapon,bomb=state.bomb;
+    const scoped=state.aiming&&w.id===3&&state.alive;scope.hidden=!scoped;nodes.crosshair.hidden=scoped;
+    const heading=((-state.player.yaw*180/Math.PI)%360+360)%360;
+    for(let i=0;i<8;i++){const offset=((i*90-heading+540)%720)-180;markers[i].style.transform=`translateX(${offset*1.8}px)`;markers[i].hidden=Math.abs(offset)>100;}
+    streak.textContent=state.winStreak?'◆'.repeat(Math.min(8,state.winStreak)):'';streak.style.color=state.winTeam===0?'var(--friendly)':'var(--enemy)';streak.title=`${state.winStreak||0} consecutive round wins`;streak.style.order=state.winTeam===0?'-1':'1';
+    const interacting=bomb.progress>0&&phase==='live';interaction.hidden=!interacting;interaction.textContent=(bomb.planted?'DEFUSING':'PLANTING')+' / '+Math.max(0,bomb.duration-bomb.progress).toFixed(1)+'s';nodes.progress.parentElement.classList.toggle('defusing',interacting&&bomb.planted);
     nodes.phase.textContent=`ROUND ${String(state.round||1).padStart(2,'0')} / ${state.attacking?'ATTACK':'DEFEND'} · ${phase==='buy'?'REQUISITION':phase.toUpperCase()}`;
     const secs=Math.max(0,Math.ceil(bomb.planted?bomb.timer:state.time));nodes.timer.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;nodes.timer.classList.toggle('armed',bomb.planted);nodes.scores.textContent=`${state.scores[0]}   :   ${state.scores[1]}`;
     nodes.vitals.textContent=`${Math.ceil(state.health)} HP   /   ${Math.ceil(state.armor)} ARM`;nodes.credits.textContent=`$${state.money.toLocaleString()}   ·   ${state.kills} KILLS${state.kit?'   ·   KIT':''}`;
