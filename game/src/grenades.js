@@ -1,4 +1,4 @@
-// Cinder Protocol: Pool projectiles and smoke clouds; preview uses the same launch velocity and gravity.
+// Pool projectiles and smoke; preview shares the launch velocity and gravity.
 import * as THREE from 'three';
 import { state } from './state.js';
 export function createGrenades(scene,world,combat,audio){

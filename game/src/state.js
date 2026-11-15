@@ -1,4 +1,4 @@
-// Cinder Protocol: Shared match data; rendering resources are managed by the modules that create them.
+// Shared match data; each rendering module manages the resources it creates.
 export const state = {
   phase:'start', previous:'buy', time:20, round:0, scores:[0,0], money:3200,
   attacking:true, buyOpen:false, winner:-1, reason:'', elapsed:0, lossStreak:0,

@@ -1,4 +1,4 @@
-// Cinder Protocol: Resolve hits against world geometry before applying enemy damage.
+// Resolve world occlusion before applying damage to an enemy hit by a shot.
 import * as THREE from 'three';
 import { state } from './state.js';
 export function createCombat(world,random,effects,audio){

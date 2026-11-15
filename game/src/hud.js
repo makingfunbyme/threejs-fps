@@ -1,4 +1,4 @@
-// Cinder Protocol: Cache HUD elements once; render their values from shared match state.
+// Cache HUD elements once and render their values from shared match state.
 import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
 export function createHud(){

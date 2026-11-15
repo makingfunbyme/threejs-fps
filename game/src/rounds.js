@@ -1,4 +1,4 @@
-// Cinder Protocol: Own round transitions, equipment purchases, and uplink interaction progress.
+// Manage round transitions, purchases, and timed uplink interactions.
 import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
 export function createRounds(player,weapon,bots,grenades,effects,audio){

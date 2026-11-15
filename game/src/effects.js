@@ -1,4 +1,4 @@
-// Cinder Protocol: Reuse fixed pools for tracers, impact flecks, and floating damage labels.
+// Reuse fixed pools for shot tracers, impact flecks, and floating damage labels.
 import * as THREE from 'three';
 import { state } from './state.js';
 export function createEffects(scene,random){

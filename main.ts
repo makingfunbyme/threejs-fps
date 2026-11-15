@@ -1,4 +1,4 @@
-// Cinder Protocol: Package the static Cinder Protocol entry using Node's standard library.
+// Cinder Protocol: Package the static entry using Node's standard library.
 // Run `node serve.ts` to play locally; run this file to prepare the submission.
 // MAKEFUN_OUTPUT_DIR overrides /output for local packaging checks.
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -16,7 +16,7 @@ if (existsSync(join(here, 'screenshots'))) {
   cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
 }
 
-// Fail before dossier generation if the packaged entry is incomplete.
+// Validate the output entry and screenshot directory before generating the dossier.
 for (const relative of ['game/index.html', 'screenshots']) {
   if (!existsSync(join(out, relative))) {
     throw new Error(`Cinder Protocol packaging failed: missing ${relative} in ${out}`);
