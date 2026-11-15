@@ -1,9 +1,9 @@
-// Cache HUD elements once; render their values from shared match state.
+// Cinder Protocol: Cache HUD elements once; render their values from shared match state.
 import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
 export function createHud(){
   const $=id=>document.getElementById(id),nodes={};for(const id of ['overlay','buy','phase','timer','scores','vitals','credits','ammo','weapon','objective','feed','banner','roster','progress','status','hitmarker','crosshair','damage','map-player','map-bomb','slots'])nodes[id]=$(id);
-  const labels=['','','','','Ceramic armor','Fragment grenade','Smoke canister','Defuse kit'],costs=[0,1200,2500,4200,650,300,300,400];let lastPhase='';
+  const labels=['','','','','Ceramic armor','Fragmentation grenade','Smoke canister','Defuse kit'],costs=[0,1200,2500,4200,650,300,300,400];let lastPhase='';
   for(let i=0;i<8;i++){const b=document.createElement('button');b.dataset.item=i;b.innerHTML=`<span>0${i+1}</span><b>${i<4?GUNS[i].name:labels[i]}</b><small>$${costs[i]}</small>`;nodes.buy.querySelector('.stock').appendChild(b);}
   const slotNodes=[];for(let i=0;i<4;i++){const el=document.createElement('span');el.textContent=`${i+1} ${GUNS[i].short}`;nodes.slots.appendChild(el);slotNodes.push(el);}
   return {render(){const phase=state.phase,w=state.weapon,bomb=state.bomb;

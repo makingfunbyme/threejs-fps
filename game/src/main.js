@@ -1,4 +1,4 @@
-// Run a fixed-step match, or paint a seeded capture and signal window.__shotReady.
+// Cinder Protocol: Run a fixed-step match, or paint a seeded capture and signal window.__shotReady.
 import * as THREE from 'three';
 import { state,GUNS,randomGenerator } from './state.js';
 import { PALETTE } from './palette.js';

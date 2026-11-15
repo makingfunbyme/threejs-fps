@@ -1,4 +1,4 @@
-// Track held keys separately from presses consumed by the fixed simulation step.
+// Cinder Protocol: Track held keys separately from presses consumed by the fixed simulation step.
 export function createInput(canvas,onLockChange){
   const keys=new Set(),pressed=new Set();
   const state={keys,pressed,locked:false,firing:false,aiming:false,lookX:0,lookY:0};

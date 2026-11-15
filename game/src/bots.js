@@ -1,4 +1,4 @@
-// Route navigation and visibility checks share the combat collision model.
+// Cinder Protocol: Route navigation and visibility checks share the combat collision model.
 import * as THREE from 'three';
 import { PALETTE } from './palette.js';
 import { state } from './state.js';

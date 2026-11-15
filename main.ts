@@ -1,4 +1,4 @@
-// Package the static Cinder Protocol entry using Node's standard library.
+// Cinder Protocol: Package the static Cinder Protocol entry using Node's standard library.
 // Run `node serve.ts` to play locally; run this file to prepare the submission.
 // MAKEFUN_OUTPUT_DIR overrides /output for local packaging checks.
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
