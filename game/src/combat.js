@@ -1,3 +1,4 @@
+// Resolve hits against world geometry before applying enemy damage.
 import * as THREE from 'three';
 import { state } from './state.js';
 export function createCombat(world,random,effects,audio){

@@ -1,3 +1,4 @@
+// Resolve movement per axis and preserve crouch height beneath low ceilings.
 import * as THREE from 'three';
 export function createPlayer(colliders){
   const p={position:new THREE.Vector3(9,0,14),velocity:new THREE.Vector3(),yaw:0,pitch:0,eye:1.6,height:1.72,onGround:true,crouching:false};

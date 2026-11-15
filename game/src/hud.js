@@ -1,3 +1,4 @@
+// Cache HUD elements once; render their values from shared match state.
 import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
 export function createHud(){
@@ -9,7 +10,7 @@ export function createHud(){
     nodes.phase.textContent=`ROUND ${String(state.round||1).padStart(2,'0')} / ${state.attacking?'ATTACK':'DEFEND'} · ${phase==='buy'?'REQUISITION':phase.toUpperCase()}`;
     const secs=Math.max(0,Math.ceil(bomb.planted?bomb.timer:state.time));nodes.timer.textContent=`${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;nodes.timer.classList.toggle('armed',bomb.planted);nodes.scores.textContent=`${state.scores[0]}   :   ${state.scores[1]}`;
     nodes.vitals.textContent=`${Math.ceil(state.health)} HP   /   ${Math.ceil(state.armor)} ARM`;nodes.credits.textContent=`$${state.money.toLocaleString()}   ·   ${state.kills} KILLS${state.kit?'   ·   KIT':''}`;
-    nodes.ammo.textContent=`${w.mag} / ${w.reserve}`;nodes.weapon.textContent=GUNS[w.id].short+(w.reloadLeft>0?' / RELOADING':' / '+(state.aiming?'ADS':'AUTO READY'));
+    nodes.ammo.textContent=`${w.mag} / ${w.reserve}`;nodes.weapon.textContent=GUNS[w.id].short+(w.reloadLeft>0?' / RELOADING':' / '+(state.aiming?'ADS':'READY TO FIRE'));
     let a=state.alive?1:0,b=0;for(const bot of state.bots)if(bot.alive){if(bot.team)b++;else a++;}nodes.roster.textContent=`CINDER ${'◆'.repeat(a)}${'◇'.repeat(4-a)}  /  SENTINEL ${'◆'.repeat(b)}${'◇'.repeat(4-b)}`;
     const p=state.player.position;let near='';for(const s of SITES)if(Math.hypot(p.x-s.x,p.z-s.z)<s.radius)near=s.name;
     nodes.objective.textContent=bomb.planted?`ARMED / ${SITES[bomb.site].name} · ${state.attacking?'Protect the uplink':'Hold E to defuse · '+(state.kit?'3.5':'7')+'s'}`:bomb.dropped?'DEVICE DROPPED / Recover the uplink':state.attacking?(near?'HOLD E / PLANT AT '+near+' · 3.5s':'CARRYING UPLINK / Choose A or B'):'HOLD A + B / Deny the uplink';nodes.progress.style.width=`${Math.min(100,bomb.progress/bomb.duration*100)}%`;

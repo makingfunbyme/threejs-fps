@@ -1,6 +1,6 @@
+// Reuse fixed pools for tracers, impact flecks, and floating damage labels.
 import * as THREE from 'three';
 import { state } from './state.js';
-// Fixed pools: shots, impact flecks and damage labels never create scene nodes in combat.
 export function createEffects(scene,random){
   const tracers=[],particles=[],labels=[];let ti=0,pi=0,li=0;
   const cube=new THREE.BoxGeometry(.055,.055,.055);

@@ -1,3 +1,4 @@
+// Route navigation and visibility checks share the combat collision model.
 import * as THREE from 'three';
 import { PALETTE } from './palette.js';
 import { state } from './state.js';
@@ -12,7 +13,7 @@ export function createBots(scene,world,combat,random,audio){
     const gun=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.65),dark);gun.position.set(.3,1.12,-.3);group.add(gun);group.traverse(m=>{if(m.isMesh)m.castShadow=true;});scene.add(group);
     state.bots.push({name:names[i],team,group,legs,position:group.position,health:100,armor:35,alive:true,route:i%3,node:0,cooldown:0,reaction:0,hold:0,think:0,target:null,lastX:0,lastZ:0,heard:0,fall:0,kit:i%2===0,peek:i%2?1:-1});
   }
-  function reset(){for(let i=0;i<state.bots.length;i++){const b=state.bots[i],attack=b.team===(state.attacking?0:1),r=ROUTES[b.route],p=r[attack?0:r.length-1];b.position.set(p[0]+(attack?0:(i%2)*.65),0,p[1]);b.group.rotation.set(0,attack?0:Math.PI,0);b.alive=true;b.health=100;b.armor=35;b.node=attack?1:r.length-2;b.cooldown=.6+random();b.target=null;b.hold=0;b.think=0;b.heard=0;b.fall=0;}}
+  function reset(){for(let i=0;i<state.bots.length;i++){const b=state.bots[i],attack=b.team===(state.attacking?0:1),r=ROUTES[b.route],p=r[attack?0:r.length-1];b.position.set(p[0]+(attack?0:(i%2)*.65),0,p[1]);b.group.rotation.set(0,attack?0:Math.PI,0);b.alive=true;b.health=100;b.armor=35;b.node=attack?1:r.length-2;b.cooldown=.6+random();b.target=null;b.reaction=0;b.hold=0;b.think=0;b.heard=0;b.fall=0;}}
   function move(b,x,z,dt,speed=2.7){const dx=x-b.position.x,dz=z-b.position.z,d=Math.hypot(dx,dz);if(d<.3)return true;const step=Math.min(d,dt*speed),nx=b.position.x+dx/d*step,nz=b.position.z+dz/d*step;let bx=false,bz=false;
     for(const c of world.colliders){if(c.max.y<.1)continue;if(nx+.31>c.min.x&&nx-.31<c.max.x&&b.position.z+.31>c.min.z&&b.position.z-.31<c.max.z)bx=true;if(b.position.x+.31>c.min.x&&b.position.x-.31<c.max.x&&nz+.31>c.min.z&&nz-.31<c.max.z)bz=true;}
     if(!bx)b.position.x=nx;if(!bz)b.position.z=nz;b.group.rotation.y=Math.atan2(-dx,-dz);b.legs[0].rotation.x=Math.sin(state.elapsed*10)*.3;b.legs[1].rotation.x=-b.legs[0].rotation.x;return false;

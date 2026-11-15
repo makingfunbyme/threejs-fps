@@ -1,3 +1,4 @@
+// Pool projectiles and smoke clouds; preview uses the same launch velocity and gravity.
 import * as THREE from 'three';
 import { state } from './state.js';
 export function createGrenades(scene,world,combat,audio){

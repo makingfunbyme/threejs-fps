@@ -1,3 +1,6 @@
+// Weapon slots preserve ammunition independently when switching loadouts.
+// The firing loop repeats each gun’s horizontal recoil pattern by burst index;
+// releasing the trigger lets burst recovery restore first-shot accuracy.
 import * as THREE from 'three';
 import { PALETTE } from './palette.js';
 import { state,GUNS } from './state.js';
@@ -19,7 +22,7 @@ export function createWeapon(camera,audio){
   return {state:s,model,equip,switchTo,reset,ready(){return s.mag>0&&s.cooldown<=0&&s.reloadLeft<=0;},
     fire(){s.mag--;s.cooldown=GUNS[s.id].gap;s.flash=.05;s.kick=.065;s.burst++;s.recovery=.24;audio.shot(s.id);},
     reload(){if(!s.reloadLeft&&s.mag<GUNS[s.id].mag&&s.reserve){s.reloadLeft=GUNS[s.id].reload;audio.reload();}},
-    spread(speed,crouch,air){return (GUNS[s.id].spread+speed*.0045+Math.min(s.burst,14)*.0015+(air?.045:0))*(crouch?.55:1)*(state.aiming?.38:1);},
+    spread(speed,crouch,air){return (GUNS[s.id].spread+speed*.0044+Math.min(s.burst,14)*.0015+(air?.045:0))*(crouch?.55:1)*(state.aiming?.38:1);},
     step(dt){s.cooldown=Math.max(0,s.cooldown-dt);s.flash=Math.max(0,s.flash-dt);s.recovery-=dt;if(s.recovery<=0)s.burst=0;s.kick*=Math.max(0,1-dt*13);
       const speed=Math.hypot(state.player.velocity.x,state.player.velocity.z),bob=Math.sin(state.elapsed*10)*Math.min(speed,5)*.0018;
       model.position.set(state.aiming?.025:.26,(state.aiming?-.18:-.27)+Math.abs(bob),-.48+s.kick);model.rotation.set(s.kick*2,Math.sin(state.elapsed*5)*.004*speed,bob*.8);hands.visible=!state.aiming;model.visible=state.alive;flash.visible=s.flash>0;light.intensity=s.flash>0?7:0;

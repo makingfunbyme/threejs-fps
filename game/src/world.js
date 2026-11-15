@@ -1,3 +1,4 @@
+// Build the relay yard and its static collision boxes from shared geometry helpers.
 import * as THREE from 'three';
 import { PALETTE } from './palette.js';
 export const SITES=[{x:8,z:-11,radius:3.2,name:'A'},{x:-10,z:-10,radius:3.1,name:'B'}];

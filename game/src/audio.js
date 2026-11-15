@@ -1,4 +1,4 @@
-// All sound is synthesized locally. One reusable noise buffer, no downloaded assets.
+// Synthesize sound locally; reuse one noise buffer after the first user gesture.
 export function createAudio(random){
   let ctx,noise,master,lastStep=0;
   function unlock(){if(!ctx){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;ctx=new Audio();master=ctx.createGain();master.gain.value=.22;master.connect(ctx.destination);noise=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=random()*2-1;}if(ctx.state==='suspended')ctx.resume();}
