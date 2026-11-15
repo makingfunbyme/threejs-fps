@@ -1,24 +1,21 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cinder Protocol — Relay Yard</title><link rel="stylesheet" href="./src/style.css"></head>
-<body><div id="game"></div>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101c26"><title>Cinder Protocol — Relay Yard</title><link rel="stylesheet" href="./src/style.css"></head>
+<body>
+<div id="game"></div>
 <div id="hud" aria-hidden="true">
- <div class="brand">CP<span>CINDER PROTOCOL</span></div>
- <div class="match"><div id="phase"></div><div class="scoreline"><span>CINDER</span><b id="scores">0 : 0</b><span>SENTINEL</span></div><strong id="timer">1:35</strong><div id="roster"></div></div>
- <div class="location"><b>RELAY YARD</b><span>07 / INDUSTRIAL UPLINK</span><div class="minimap"><i class="building"></i><i class="west"></i><i class="east"></i><b>A</b><em>▲</em></div><small>FIRST TO 8 · SIDES SWITCH EACH ROUND</small></div>
- <div id="feed"></div><div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div>
- <div class="objective"><span>OBJECTIVE / A</span><b id="objective"></b><div class="track"><i id="progress"></i></div></div>
- <div class="bottom"><div><b id="vitals"></b><span id="credits"></span></div><div class="status"><b id="status"></b><small>WASD MOVE · CTRL CROUCH · SPACE JUMP · RIGHT MOUSE SCOPE</small></div><div class="loadout"><b id="ammo"></b><span id="weapon"></span></div></div>
+  <div class="brand">C<span>CINDER / PROTOCOL</span></div>
+  <div class="match"><div id="phase"></div><div class="scoreline"><span>CINDER</span><b id="scores">0 : 0</b><span>SENTINEL</span></div><strong id="timer">1:40</strong><div id="roster"></div></div>
+  <div class="location"><b>RELAY YARD</b><span>07 / INDUSTRIAL UPLINK</span><div class="minimap"><i class="building"></i><i class="west"></i><i class="east"></i><b class="site-a">A</b><b class="site-b">B</b><em id="map-player">▲</em><strong id="map-bomb" hidden>◆</strong></div><small>FIRST TO 8 / ALTERNATING SIDES</small></div>
+  <div id="feed"></div><div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div><div id="damage"></div>
+  <div class="objective"><span>MISSION / RELAY CONTROL</span><b id="objective"></b><div class="track"><i id="progress"></i></div></div>
+  <div id="slots"></div>
+  <div class="bottom"><div><b id="vitals"></b><span id="credits"></span></div><div class="status"><b id="status"></b><small>WASD MOVE · CTRL CROUCH · SHIFT SILENT · RMB AIM · R RELOAD</small></div><div class="loadout"><b id="ammo"></b><span id="weapon"></span></div></div>
 </div>
 <div id="banner" hidden><small>OPERATION / RELAY YARD</small><strong>ROUND SECURED</strong><p></p></div>
-<div id="overlay" class="overlay"><section class="panel"><div class="eyebrow">TACTICAL OPERATIONS / 07</div><h1 id="overlay-title">CINDER PROTOCOL</h1><p class="tagline">Every angle matters.</p><p>Infiltrate Relay Yard. Arm the uplink or hold the line. Lead your squad through a first-to-eight tactical match.</p><div class="features"><span>04 WEAPONS</span><span>03 ROUTES</span><span>01 OBJECTIVE</span></div><button id="play">DEPLOY TO RELAY YARD</button><div class="brief"><b>FIELD BRIEFING</b><p>Buy gear with <kbd>B</kbd> during requisition. Hold <kbd>E</kbd> for 3 seconds to plant or 5 to defuse. <kbd>G</kbd> throws a frag; hold <kbd>F</kbd> to preview its arc. Stand still and crouch for precise shots. <kbd>R</kbd> reloads. Esc pauses.</p></div></section><div class="edition">CINDER INDUSTRIES / FIELD SYSTEMS DIVISION <span>ORIGINAL MAP · RELAY YARD</span></div></div>
-<div id="buy" hidden><section><div class="eyebrow">FIELD REQUISITIONS / [B] CLOSE</div><h2>Build your advantage.</h2><p class="balance"></p><div class="stock"></div><p>Choose with 1–6 or click. Purchases refill ammunition. Equipment persists if you survive.</p><button id="close-buy">RETURN TO DEPLOYMENT</button></section></div>
-<script type="importmap">
-{
-  "imports": {
-    "three": "./vendor/three/three.module.min.js"
-  }
-}
-</script>
+<div id="overlay" class="overlay"><section class="panel"><div class="eyebrow">TACTICAL OPERATIONS / VOL. 07</div><div class="title-rule"></div><h1 id="overlay-title">CINDER PROTOCOL</h1><p class="tagline">Own the angle. Break the silence.</p><p>A four-on-four fight through an industrial relay station. Split the defense, cut sightlines, and bring the uplink online.</p><div class="features"><span>04 / WEAPONS</span><span>02 / BOMB SITES</span><span>03 / APPROACHES</span></div><button id="play">DEPLOY TO RELAY YARD</button><div class="brief"><b>FIELD BRIEFING</b><p><kbd>B</kbd> requisitions · <kbd>1–4</kbd> switch weapons · <kbd>RMB</kbd> aim<br><kbd>G</kbd> frag · <kbd>X</kbd> smoke · hold <kbd>F</kbd> frag trajectory<br>Hold <kbd>E</kbd> at A or B to plant (3.5s). Defuse in 7s, or 3.5s with a kit. <kbd>Enter</kbd> skips requisition. Esc pauses.</p></div></section><div class="edition">CINDER INDUSTRIES / FIELD SYSTEMS DIVISION<span>RELAY YARD · 4 v 4 · FIRST TO EIGHT</span></div><div class="side-label">EST. 2086 / SIGNALS DIVISION</div></div>
+<div id="buy" hidden><section><div class="eyebrow">FIELD REQUISITIONS / [B] CLOSE</div><h2>Build your advantage.</h2><p class="balance"></p><div class="stock"></div><p>Choose with 1–8 or click. Weapon slots retain ammo when switched. Kill +$300 · win +$3,250 · loss $1,400 + $500 per consecutive loss (up to $3,400).</p><button id="close-buy">RETURN TO DEPLOYMENT</button></section></div>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

@@ -1,58 +1,33 @@
-import { state, GUNS } from './state.js';
-import { SITE } from './world.js';
-export function createRounds(player,weapon,bots,grenades) {
-  function begin(){
-    state.round++;state.attacking=state.round%2===1;state.phase='buy';state.time=18;state.buyOpen=false;state.bought=false;
-    state.health=100;state.armor=Math.max(50,state.armor);state.alive=true;state.grenade=Math.max(1,state.grenade);
-    player.state.position.set(state.attacking?9:7,0,state.attacking?14:-14);player.state.velocity.set(0,0,0);player.state.yaw=state.attacking?0:Math.PI;player.state.pitch=0;
-    if(state.round===1||state.died)weapon.equip(0);else weapon.equip(state.weapon.id);
-    state.died=false;state.bomb.planted=false;state.bomb.dropped=false;state.bomb.carrier=-1;state.bomb.timer=36;state.bomb.progress=0;state.bomb.actor=-2;
-    bots.reset();grenades.reset();
+import { state,GUNS } from './state.js';
+import { SITES } from './world.js';
+export function createRounds(player,weapon,bots,grenades,effects,audio){
+  function begin(){state.round++;state.attacking=state.round%2===1;state.phase='buy';state.time=18;state.buyOpen=false;state.health=100;state.armor=state.died?0:state.armor;state.alive=true;if(state.died)state.kit=false;state.grenade=Math.max(1,state.grenade);state.smoke=Math.max(1,state.smoke);weapon.reset(state.died||state.round===1);state.died=false;
+    const p=player.state;p.position.set(state.attacking?9:8,0,state.attacking?14:-14);p.velocity.set(0,0,0);p.yaw=state.attacking?0:Math.PI;p.pitch=0;
+    Object.assign(state.bomb,{planted:false,carrier:state.attacking?-1:3,dropped:false,x:7,z:-11,timer:40,progress:0,actor:-2,site:0,duration:3.5});bots.reset();grenades.reset();effects.reset();audio.beep();
   }
-  function finish(team,reason){if(state.phase!=='live')return;state.winner=team;state.reason=reason;state.scores[team]++;state.money=Math.min(16000,state.money+(team===0?3250:1900));state.died=!state.alive;state.phase=state.scores[team]>=8?'match':'end';state.time=6;state.buyOpen=false;}
-  function buy(id){if(state.phase!=='buy'||!state.alive)return;const cost=id<4?GUNS[id].price:id===4?650:300;
-    if(state.money<cost){state.message='Insufficient credits';state.messageTime=2;return;}
-    if(id===5&&state.grenade>=2){state.message='Maximum two frags';state.messageTime=2;return;}
-    if(id===4&&state.armor>=100)return;
-    state.money-=cost;if(id<4)weapon.equip(id);else if(id===4)state.armor=100;else state.grenade++;
+  function finish(team,reason){if(state.phase!=='live')return;state.winner=team;state.reason=reason;state.scores[team]++;if(team===0){state.lossStreak=0;state.money+=3250;}else{state.money+=1400+500*Math.min(state.lossStreak,4);state.lossStreak++;}state.money=Math.min(16000,state.money);state.died=!state.alive;state.phase=state.scores[team]>=8?'match':'end';state.time=6;state.buyOpen=false;audio.beep();}
+  function buy(id){if(state.phase!=='buy'||!state.alive||id<0||id>7)return;const cost=id<4?GUNS[id].price:id===4?650:id===7?400:300;
+    if(state.money<cost){state.message='INSUFFICIENT CREDITS';state.messageTime=2;return;}
+    if((id===4&&state.armor>=100)||(id===5&&state.grenade>=2)||(id===6&&state.smoke>=2)||(id===7&&state.kit)){state.message='EQUIPMENT ALREADY FULL';state.messageTime=2;return;}
+    state.money-=cost;if(id<4)weapon.equip(id);else if(id===4)state.armor=100;else if(id===5)state.grenade++;else if(id===6)state.smoke++;else state.kit=true;audio.reload();
   }
-  function step(dt,keys){
-    state.elapsed+=dt;state.messageTime=Math.max(0,state.messageTime-dt);state.hit=Math.max(0,(state.hit||0)-dt);
-    if(state.phase==='start'||state.phase==='paused'||state.phase==='match')return;
-    state.time-=dt;
-    if(state.phase==='buy'){if(state.time<=0){state.phase='live';state.time=95;state.buyOpen=false;}return;}
+  function step(dt,keys){if(state.phase==='paused'||state.phase==='start')return;state.elapsed+=dt;state.messageTime=Math.max(0,state.messageTime-dt);state.hit=Math.max(0,state.hit-dt);state.hurt=Math.max(0,state.hurt-dt);if(state.phase==='match')return;state.time-=dt;
+    if(state.phase==='buy'){if(state.time<=0||keys.has('Enter')){state.phase='live';state.time=100;state.buyOpen=false;audio.beep();}return;}
     if(state.phase==='end'){if(state.time<=0)begin();return;}
-    let allies=state.alive?1:0,enemies=0;for(const b of state.bots){if(b.alive){if(b.team===0)allies++;else enemies++;}}
-    const attackTeam=state.attacking?0:1,defendTeam=1-attackTeam;
-    if(!state.bomb.planted){
-      if(allies===0){finish(1,'Squad eliminated');return;}if(enemies===0){finish(0,'Squad eliminated');return;}
-      if(state.time<=0){finish(defendTeam,'Uplink secured · time expired');return;}
-    }else {
-      if((defendTeam===0?allies:enemies)===0){finish(attackTeam,'Defenders eliminated');return;}
-      state.bomb.timer-=dt;if(state.bomb.timer<=0){finish(attackTeam,'Uplink detonated');return;}
-    }
-    let actor=-2;
-    const p=player.state.position,bomb=state.bomb;
-    if(bomb.dropped){
-      for(let i=-1;i<state.bots.length;i++){
-        const a=i===-1?state:state.bots[i],team=i===-1?0:a.team,pos=i===-1?p:a.position;
-        if(a.alive&&team===attackTeam&&Math.hypot(pos.x-bomb.x,pos.z-bomb.z)<1.6){bomb.carrier=i;bomb.dropped=false;break;}
-      }
-    }
-    const near=Math.hypot(p.x-SITE.x,p.z-SITE.z)<SITE.radius;
-    if(state.alive&&near&&keys.has('KeyE')&&(bomb.planted?!state.attacking:state.attacking&&!bomb.dropped&&bomb.carrier===-1))actor=-1;
-    for(let i=0;i<state.bots.length;i++){
-      const b=state.bots[i];if(!b.alive||Math.hypot(b.position.x-SITE.x,b.position.z-SITE.z)>SITE.radius)continue;
-      if(bomb.planted?b.team===defendTeam:b.team===attackTeam&&(!state.attacking||bomb.carrier===i)){actor=i;break;}
-    }
-    if(actor!==-2){if(bomb.actor!==actor)bomb.progress=0;bomb.actor=actor;bomb.progress+=dt;
-      if(bomb.progress>=(bomb.planted?5:3)){
-        if(bomb.planted){finish(defendTeam,'Uplink defused');return;}
-        bomb.planted=true;bomb.timer=36;bomb.progress=0;bomb.actor=-2;state.message='UPLINK ARMED • 36 SECONDS';state.messageTime=4;
-      }
-    }else {bomb.progress=0;bomb.actor=-2;}
-    // A bot carrying a recovered device drops it on death.
+    let allies=state.alive?1:0,enemies=0;for(const b of state.bots)if(b.alive){if(b.team===0)allies++;else enemies++;}
+    const attack=state.attacking?0:1,defend=1-attack,bomb=state.bomb,p=player.state.position;
+    if(!bomb.planted){if(allies===0){finish(1,'Cinder squad eliminated');return;}if(enemies===0){finish(0,'Sentinel squad eliminated');return;}if(state.time<=0){finish(defend,'Relay secured · time expired');return;}}
+    else {if((defend===0?allies:enemies)===0){finish(attack,'Defenders eliminated');return;}bomb.timer-=dt;if(bomb.timer<=0){audio.boom();finish(attack,'Uplink detonated at '+SITES[bomb.site].name);return;}}
     if(!bomb.planted&&bomb.carrier>=0&&!state.bots[bomb.carrier].alive&&!bomb.dropped){const b=state.bots[bomb.carrier];bomb.dropped=true;bomb.x=b.position.x;bomb.z=b.position.z;}
+    if(bomb.dropped)for(let i=-1;i<state.bots.length;i++){const a=i===-1?state:state.bots[i],pos=i===-1?p:a.position;if(a.alive&&(i===-1?0:a.team)===attack&&Math.hypot(pos.x-bomb.x,pos.z-bomb.z)<1.6){bomb.carrier=i;bomb.dropped=false;break;}}
+    let actor=-2,siteIndex=bomb.site;
+    for(let i=-1;i<state.bots.length;i++){const a=i===-1?state:state.bots[i],team=i===-1?0:a.team,pos=i===-1?p:a.position;if(!a.alive||(i===-1&&!keys.has('KeyE'))||(i>=0&&a.target?.alive))continue;
+      if(bomb.planted?team!==defend:team!==attack||bomb.dropped||bomb.carrier!==i)continue;
+      for(let s=0;s<SITES.length;s++){const site=SITES[s];if(bomb.planted&&s!==bomb.site)continue;if(Math.hypot(pos.x-site.x,pos.z-site.z)<(bomb.planted?2.3:site.radius)){actor=i;siteIndex=s;break;}}if(actor!==-2)break;
+    }
+    if(actor===-2){bomb.progress=0;bomb.actor=-2;return;}
+    if(bomb.actor!==actor)bomb.progress=0;bomb.actor=actor;bomb.site=siteIndex;bomb.duration=bomb.planted?((actor===-1?state.kit:state.bots[actor].kit)?3.5:7):3.5;bomb.progress+=dt;
+    if(bomb.progress>=bomb.duration){if(bomb.planted){finish(defend,'Uplink defused at '+SITES[bomb.site].name);return;}bomb.planted=true;bomb.timer=40;bomb.progress=0;bomb.actor=-2;bomb.x=SITES[siteIndex].x;bomb.z=SITES[siteIndex].z;state.message='UPLINK ARMED AT '+SITES[siteIndex].name;state.messageTime=4;if(actor===-1)state.money=Math.min(16000,state.money+300);audio.beep();}
   }
   return {begin,finish,buy,step};
 }

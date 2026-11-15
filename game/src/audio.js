@@ -1,0 +1,8 @@
+// All sound is synthesized locally. One reusable noise buffer, no downloaded assets.
+export function createAudio(random){
+  let ctx,noise,master,lastStep=0;
+  function unlock(){if(!ctx){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;ctx=new Audio();master=ctx.createGain();master.gain.value=.22;master.connect(ctx.destination);noise=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);const data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=random()*2-1;}if(ctx.state==='suspended')ctx.resume();}
+  function tone(freq,duration,volume,end=freq){if(!ctx)return;const now=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(freq,now);o.frequency.exponentialRampToValueAtTime(Math.max(20,end),now+duration);g.gain.setValueAtTime(volume,now);g.gain.exponentialRampToValueAtTime(.001,now+duration);o.connect(g);g.connect(master);o.start(now);o.stop(now+duration);}
+  function burst(duration,cutoff,volume){if(!ctx)return;const now=ctx.currentTime,s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();s.buffer=noise;f.type='lowpass';f.frequency.value=cutoff;g.gain.setValueAtTime(volume,now);g.gain.exponentialRampToValueAtTime(.001,now+duration);s.connect(f);f.connect(g);g.connect(master);s.start(now);s.stop(now+duration);}
+  return {unlock,shot(id=0,far=false){burst(id===3?.25:.12,far?900:2600,far?.12:.65);tone(id===3?95:150,.13,far?.08:.3,42);},reload(){tone(650,.06,.12,210);},hit(){tone(1350,.045,.16,750);},boom(){burst(.8,500,.9);tone(65,.7,.65,22);},beep(){tone(750,.18,.2,1000);},step(time){if(time-lastStep<.34)return;lastStep=time;burst(.055,450,.11);}};
+}
