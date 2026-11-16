@@ -1,4 +1,4 @@
-// Run a fixed-step match, or render a seeded capture and signal window.__shotReady.
+// Run a fixed-step match with nearby shadows, or signal window.__shotReady for a seeded capture.
 import * as THREE from 'three';
 import { state,GUNS,randomGenerator } from './state.js';
 import { PALETTE } from './palette.js';
@@ -14,11 +14,12 @@ import { createHud } from './hud.js';
 import { createAudio } from './audio.js';
 import { createEffects } from './effects.js';
 const params=new URLSearchParams(location.search),shot=params.get('shot'),seed=parseInt(params.get('seed')||'1',10)||1,random=randomGenerator(seed);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.getElementById('game').appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.BasicShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.getElementById('game').appendChild(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(PALETTE.sky);scene.fog=new THREE.Fog(PALETTE.sky,24,76);
 const camera=new THREE.PerspectiveCamera(76,innerWidth/innerHeight,.04,120);scene.add(camera);
 const world=createWorld(scene),player=createPlayer(world.colliders);state.player=player.state;
-const audio=createAudio(randomGenerator(seed+917)),effects=createEffects(scene,randomGenerator(seed+337)),weapon=createWeapon(camera,audio),combat=createCombat(world,random,effects,audio),bots=createBots(scene,world,combat,random,audio),grenades=createGrenades(scene,world,combat,audio),rounds=createRounds(player,weapon,bots,grenades,effects,audio),hud=createHud();
+const audio=createAudio(randomGenerator(seed+917)),effects=createEffects(scene,randomGenerator(seed+337)),weapon=createWeapon(camera,audio),combat=createCombat(world,random,effects,audio),bots=createBots(scene,world,combat,random,audio),grenades=createGrenades(scene,world,combat,audio),rounds=createRounds(player,weapon,bots,grenades,effects,audio),hud=createHud(combat);
+const botShadowMeshes=[];for(const bot of state.bots)bot.group.traverse(mesh=>{if(mesh.isMesh)botShadowMeshes.push(mesh);});
 const direction=new THREE.Vector3(),emptyKeys=new Set();let accumulator=0,last=performance.now();
 const input=createInput(renderer.domElement,locked=>{if(shot)return;if(locked){audio.unlock();if(state.phase==='start')rounds.begin();else if(state.phase==='paused')state.phase=state.previous;}else if(!state.buyOpen&&!['start','match','paused'].includes(state.phase)){state.previous=state.phase;state.phase='paused';}hud.render();});
 function sync(){const p=player.state;camera.position.set(p.position.x,p.position.y+(state.alive?p.eye:.55),p.position.z);camera.rotation.set(Math.min(1.5,p.pitch+effects.cameraKick),p.yaw,0,'YXZ');const target=state.aiming?(state.weapon.id===3?32:58):76;if(camera.fov!==target){camera.fov=target;camera.updateProjectionMatrix();}}
@@ -37,7 +38,7 @@ function step(dt){const c=input.state,pressed=c.pressed;
     if(state.phase==='live'){
       if(player.state.onGround&&!player.state.crouching&&!c.keys.has('ShiftLeft')&&player.groundSpeed()>2.5)audio.step(state.elapsed);
       if(pressed.has('KeyG'))grenades.throwFrag(camera);if(pressed.has('KeyX'))grenades.throwSmoke(camera);
-      if(c.firing&&weapon.ready()&&state.bomb.progress===0){const gun=GUNS[state.weapon.id],burst=state.weapon.burst;camera.getWorldDirection(direction);combat.fire(camera.position,direction,state,gun.damage,weapon.spread(player.groundSpeed(),player.state.crouching,!player.state.onGround));weapon.fire();effects.eject(camera,state.weapon.id);const scale=state.aiming?.65:1;player.recoil(gun.recoil*(.65+Math.min(burst,8)*.075)*scale,gun.pattern[burst%gun.pattern.length]*gun.recoil*scale);}
+      if(c.firing&&weapon.ready()&&state.bomb.progress===0){const gun=GUNS[state.weapon.id],burst=state.weapon.burst,recoilScale=weapon.recoilScale();camera.getWorldDirection(direction);combat.fire(camera.position,direction,state,gun.damage,weapon.spread(player.groundSpeed(),player.state.crouching,!player.state.onGround));weapon.fire();effects.eject(camera,state.weapon.id);const scale=(state.aiming?.65:1)*recoilScale;player.recoil(gun.recoil*(.65+Math.min(burst,8)*.075)*scale,gun.pattern[burst%gun.pattern.length]*gun.recoil*scale);}
     }
   }else c.lookX=c.lookY=0;
   if(state.phase==='live'){bots.step(dt);grenades.step(dt);}
@@ -47,7 +48,7 @@ function step(dt){const c=input.state,pressed=c.pressed;
   if(wasBuy&&state.phase==='live'&&!c.locked&&!shot){state.previous='live';state.phase='paused';}
   pressed.clear();
 }
-function draw(){sync();grenades.preview(camera,input.state.keys.has('KeyF')&&state.phase==='live');hud.render();renderer.render(scene,camera);}
+function draw(){sync();world.updateShadows(player.state.position);for(const mesh of botShadowMeshes)mesh.castShadow=mesh.parent.position.distanceToSquared(player.state.position)<324;grenades.preview(camera,input.state.keys.has('KeyF')&&state.phase==='live');hud.render();renderer.render(scene,camera);}
 function frame(now){requestAnimationFrame(frame);accumulator+=Math.min(.1,(now-last)/1000);last=now;while(accumulator>=1/60){step(1/60);accumulator-=1/60;}draw();}
 function capture(name){
   if(name==='start'){player.state.position.set(10,0,13);player.state.yaw=.15;player.state.pitch=-.02;bots.reset();}

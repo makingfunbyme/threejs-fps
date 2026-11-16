@@ -28,10 +28,14 @@ export function createWorld(scene){
   for(let i=0;i<2;i++){box(3,1.5,1.5,1, .75+i*1.5,-16,'surface');for(let x=-.3;x<2.5;x+=.4)box(.055,1.3,.04,x,.75+i*1.5,-15.23,'hairline',false);}
   sign('SALVAGE / 03',-3,1.1,13.1,2);sign('RELAY CORE',1,2.2,-15.22,2.5);
   box(5,4.6,8,0,2.3,0,'canvas');box(1,3.5,6,-7,1.75,1,'hairline');box(3,3.2,5,6,1.6,1,'hairline');
-  crate(-10,7,2.3,1.1);crate(10,1,1.7,1.2);crate(-6,-10,1.7,1.4);crate(3,-11,2,1.3);crate(11,-14,1.6,2);crate(-1,10,2,1.2);crate(-12,-1,1.3,1.6);crate(9,7,1.4,1.35);crate(-3,-15,2,1.2);
+  crate(-10,7,2.3,1.1);crate(10,1,1.7,1.2);crate(-6,-10,1.7,1.4);crate(3,-11,2,1.3);crate(11,-14,1.6,2);crate(-1,10,2,1.2);crate(-12,-1,1.3,1.6);crate(9,7,1.4,1.35);crate(-2,-13,2,1.2);
+  // Low mid cover leaves the route centerlines open for pushes and crossfire.
+  crate(-5.4,3.4,1.2,.85);crate(8.2,-3.8,1.4,.9);
   // Walkable loading deck and shallow stairs provide a second height without sealing a route.
   box(4,1.2,3,-10,.6,-15,'canvas');for(let i=0;i<4;i++)box(1.5,(i+1)*.3,.65,-10,(i+1)*.15,-11.8-i*.65,'hairline');
-  box(.12,.85,3,-12,1.62,-15,'accent',false);box(.12,.85,3,-8,1.62,-15,'accent',false);
+  // Closely spaced ramp treads share their exact visible boxes with collision.
+  for(let i=0;i<16;i++){const h=(i+1)*.075;box(.25,h,1.4,-4.125-i*.25,h/2,-15,'hairline');}
+  box(.12,.85,3,-12,1.62,-15,'accent',false);for(const z of [-16.15,-13.85])box(.12,.85,.7,-8,1.62,z,'accent',false);
   for(let z=-15;z<=15;z+=5){box(.25,5,.35,-14.6,2.5,z,'hairline',false);box(.25,5,.35,14.6,2.5,z,'hairline',false);box(.08,.12,2,-14.42,3,z,'accent',false);}
   for(let z=-3;z<=3;z+=1.5)box(5.06,.1,.16,0,3.8,z,'accent',false);
   box(29,.3,.6,0,5.5,-7,'hairline',false);box(.3,5.5,.6,-13.7,2.75,-7,'hairline');box(.3,5.5,.6,13.7,2.75,-7,'hairline');
@@ -42,6 +46,8 @@ export function createWorld(scene){
   // Distant industrial silhouettes and a shader sky create depth without external textures.
   for(let i=0;i<14;i++){const x=-45+i*7;box(4,8+(i%4)*4,6,x,1,-30-(i%3)*5,'hairline',false);}
   const sky=new THREE.Mesh(new THREE.SphereGeometry(95,24,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color('#344c68')},bottom:{value:new THREE.Color('#d5b994')}},vertexShader:'varying vec3 v; void main(){v=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 v;uniform vec3 top;uniform vec3 bottom;void main(){gl_FragColor=vec4(mix(bottom,top,smoothstep(-8.0,65.0,v.y)),1.0);}'}));scene.add(sky);
-  scene.add(new THREE.HemisphereLight('#d5e7ff','#4a4136',2));const sun=new THREE.DirectionalLight('#ffe4bb',3.1);sun.position.set(-12,24,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-23,right:23,top:25,bottom:-25,far:65});sun.shadow.bias=-.0005;scene.add(sun);
-  return {colliders,shootables,group};
+  scene.add(new THREE.HemisphereLight('#d5e7ff','#4a4136',2));const sun=new THREE.DirectionalLight('#ffe4bb',3.1);sun.position.set(-12,24,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,far:65});sun.shadow.bias=-.0005;scene.add(sun,sun.target);
+  const shadowCasters=[];scene.traverse(mesh=>{if(mesh.isMesh&&mesh.castShadow)shadowCasters.push(mesh);});const shadowPosition=new THREE.Vector3();
+  function updateShadows(position){sun.position.set(position.x-12,position.y+24,position.z+8);sun.target.position.copy(position);sun.target.updateMatrixWorld();for(const mesh of shadowCasters){mesh.getWorldPosition(shadowPosition);mesh.castShadow=Math.hypot(shadowPosition.x-position.x,shadowPosition.z-position.z)<18;}}
+  return {colliders,shootables,group,updateShadows};
 }

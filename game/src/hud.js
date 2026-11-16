@@ -1,14 +1,21 @@
 // Cache HUD elements once and render their values from shared match state.
 import { state,GUNS } from './state.js';
 import { SITES } from './world.js';
-export function createHud(){
+import * as THREE from 'three';
+export function createHud(combat){
   const $=id=>document.getElementById(id),nodes={};for(const id of ['overlay','buy','phase','timer','scores','vitals','credits','ammo','weapon','objective','feed','banner','roster','progress','status','hitmarker','crosshair','damage','map-player','map-bomb','slots'])nodes[id]=$(id);
   const labels=['','','','','Ceramic armor','Fragmentation grenade','Smoke canister','Defuse kit'],costs=[0,1200,2500,4200,650,300,300,400];let lastPhase='';
   for(let i=0;i<8;i++){const b=document.createElement('button');b.dataset.item=i;b.innerHTML=`<span>0${i+1}</span><b>${i<4?GUNS[i].name:labels[i]}</b><small>$${costs[i]}</small>`;nodes.buy.querySelector('.stock').appendChild(b);}
   const slotNodes=[];for(let i=0;i<4;i++){const el=document.createElement('span');el.textContent=`${i+1} ${GUNS[i].short}`;nodes.slots.appendChild(el);slotNodes.push(el);}
   const compass=document.createElement('div'),scope=document.createElement('div'),streak=document.createElement('small'),interaction=document.createElement('b');compass.id='compass';scope.id='scope';streak.id='streak';interaction.id='interaction';$('hud').append(compass,scope);nodes.scores.after(streak);nodes.progress.parentElement.after(interaction);
   const markers=[];for(let i=0;i<8;i++){const marker=document.createElement('span');marker.textContent=i%4===0?'N':i%4===1?'E':i%4===2?'S':'W';compass.appendChild(marker);markers.push(marker);}
+  const hint=document.querySelector('.status small'),map=nodes['map-player'].parentElement,botMarkers=[],sightOrigin=new THREE.Vector3(),sightTarget=new THREE.Vector3();let hintTime=0,lastHintTime=state.elapsed,lastSight=-1;
+  hint.style.transition=nodes.status.style.transition='opacity 1s';
+  for(const bot of state.bots){const dot=document.createElement('i');dot.style.cssText=`width:6px;height:6px;border-radius:50%;transform:translate(-50%,-50%);z-index:2;background:${bot.team?'#ff6262':'#55aaff'}`;dot.hidden=true;map.appendChild(dot);botMarkers.push(dot);}
   return {render(){const phase=state.phase,w=state.weapon,bomb=state.bomb;
+    if(phase==='live')hintTime+=Math.max(0,state.elapsed-lastHintTime);lastHintTime=state.elapsed;hint.style.opacity=hintTime>=10?'.18':'1';nodes.status.style.opacity=hintTime>=10&&phase==='live'&&state.alive&&state.messageTime<=0?'.35':'1';
+    if(state.elapsed<lastSight||state.elapsed-lastSight>=.1){lastSight=state.elapsed;sightOrigin.copy(state.player.position);sightOrigin.y+=state.player.eye;for(let i=0;i<state.bots.length;i++){const bot=state.bots[i],dot=botMarkers[i];sightTarget.copy(bot.position);sightTarget.y+=bot.height*.8;dot.hidden=!bot.alive||!!(bot.team&&(!state.alive||!combat.visible(sightOrigin,sightTarget)));}}
+    for(let i=0;i<state.bots.length;i++){const bot=state.bots[i],dot=botMarkers[i];if(!bot.alive)dot.hidden=true;if(!dot.hidden){dot.style.left=((bot.position.x+15)/30*100)+'%';dot.style.top=((bot.position.z+18)/36*100)+'%';}}
     const scoped=state.aiming&&w.id===3&&state.alive;scope.hidden=!scoped;nodes.crosshair.hidden=scoped;
     const heading=((-state.player.yaw*180/Math.PI)%360+360)%360;
     for(let i=0;i<8;i++){const offset=((i*90-heading+540)%720)-180;markers[i].style.transform=`translateX(${offset*1.8}px)`;markers[i].hidden=Math.abs(offset)>100;}
